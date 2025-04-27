@@ -8,6 +8,5 @@ license = "MIT"
 repository = "https://github.com/ekahPruthvi/berry_picker.git"
 
 [dependencies]
-winit = { version = "0.27", features = ["wayland"] }
-iced = "0.5"
-iced_winit = "0.5"
+gtk = { version = "0.9.6", package = "gtk4", features = ["v4_12"] }
+
