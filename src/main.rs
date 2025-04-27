@@ -1,5 +1,8 @@
 use gtk::prelude::*;
-use gtk::{glib, Application, ApplicationWindow, Box as GtkBox, Label, Orientation, ScrolledWindow};
+use gtk::{
+    glib, Application, ApplicationWindow, Box as GtkBox, Label, Orientation,
+    ScrolledWindow, Frame,
+};
 use std::fs;
 
 const APP_ID: &str = "org.ekah.BerryPicker";
@@ -18,10 +21,24 @@ fn ui(app: &Application) {
         .application(app)
         .title("Berry Picker")
         .default_width(200)
-        .default_height(300) // Small height now
+        .default_height(300)
+        .resizable(false)
         .build();
 
-    let vbox = GtkBox::new(Orientation::Vertical, 5);
+    // Main vertical layout
+    let vbox_main = GtkBox::new(Orientation::Vertical, 5);
+
+    // Heading label
+    let heading = Label::new(Some("BerryPicker"));
+    heading.set_margin_top(10);
+    heading.set_margin_bottom(10);
+    heading.set_margin_start(10);
+    heading.set_margin_end(10);
+    heading.set_xalign(0.5); // Center align heading text
+    vbox_main.append(&heading);
+
+    // VBox for file list
+    let vbox_files = GtkBox::new(Orientation::Vertical, 5);
 
     if let Ok(entries) = fs::read_dir(".") {
         for entry in entries.flatten() {
@@ -29,21 +46,32 @@ fn ui(app: &Application) {
             let file_name_str = file_name.to_string_lossy();
             let label = Label::new(Some(&file_name_str));
             label.set_xalign(0.0);
-            label.set_margin_top(5);
-            label.set_margin_bottom(5);
+            label.set_margin_top(10);
+            label.set_margin_bottom(10);
             label.set_margin_start(10);
             label.set_margin_end(10);
-            vbox.append(&label);
+            vbox_files.append(&label);
         }
     }
 
-    // Create a scrolled window and put the vbox inside
-    let scrolled_window = ScrolledWindow::builder()
-        .child(&vbox)
-        .min_content_height(5 * 50) // Approx 5 labels × ~50px each
-        .max_content_height(5 * 50) // Fix max height too
-        .build();
+    // Make vbox_files scrollable
+    let scrolled_window = ScrolledWindow::new();
+    scrolled_window.set_child(Some(&vbox_files));
 
-    window.set_child(Some(&scrolled_window));
+    // Frame around the scrolled window
+    let frame = Frame::new(None);
+    frame.set_child(Some(&scrolled_window));
+    frame.set_margin_start(10);
+    frame.set_margin_end(10);
+    frame.set_margin_bottom(10);
+    frame.set_margin_top(0);
+
+    // Make the frame expand vertically to fill the empty space
+    frame.set_vexpand(true);  // This makes the frame fill up the vertical space
+
+    // Add frame (with scrolled list) to main vbox
+    vbox_main.append(&frame);
+
+    window.set_child(Some(&vbox_main));
     window.present();
 }
