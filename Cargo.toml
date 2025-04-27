@@ -9,4 +9,8 @@ repository = "https://github.com/ekahPruthvi/berry_picker.git"
 
 [dependencies]
 gtk = { version = "0.9.6", package = "gtk4", features = ["v4_12"] }
+glib = "0.17"
+url = "2.2"
+mime_guess = "2.0.5"
+
 

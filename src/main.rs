@@ -1,9 +1,12 @@
 use gtk::prelude::*;
 use gtk::{
     glib, Application, ApplicationWindow, Box as GtkBox, Label, Orientation,
-    ScrolledWindow, Frame,
+    ScrolledWindow, Frame, DragSource, gdk::ContentProvider, gio
 };
 use std::fs;
+use std::path::PathBuf;
+use gio::File;
+use glib::Value;
 
 const APP_ID: &str = "org.ekah.BerryPicker";
 
@@ -20,58 +23,80 @@ fn ui(app: &Application) {
     let window = ApplicationWindow::builder()
         .application(app)
         .title("Berry Picker")
-        .default_width(200)
+        .default_width(250)
         .default_height(300)
         .resizable(false)
         .build();
 
-    // Main vertical layout
     let vbox_main = GtkBox::new(Orientation::Vertical, 5);
 
-    // Heading label
     let heading = Label::new(Some("BerryPicker"));
     heading.set_margin_top(10);
     heading.set_margin_bottom(10);
     heading.set_margin_start(10);
     heading.set_margin_end(10);
-    heading.set_xalign(0.5); // Center align heading text
+    heading.set_xalign(0.0);
+    heading.set_markup(
+        "<span font='Cantarell 18' weight='bold'>BerryPicker</span>"
+    );
+
     vbox_main.append(&heading);
 
-    // VBox for file list
     let vbox_files = GtkBox::new(Orientation::Vertical, 5);
 
     if let Ok(entries) = fs::read_dir(".") {
         for entry in entries.flatten() {
+            let path: PathBuf = entry.path();
             let file_name = entry.file_name();
             let file_name_str = file_name.to_string_lossy();
+
             let label = Label::new(Some(&file_name_str));
             label.set_xalign(0.0);
             label.set_margin_top(10);
             label.set_margin_bottom(10);
             label.set_margin_start(10);
             label.set_margin_end(10);
+
+            // Make the label draggable
+            make_label_draggable(&label, path);
+
             vbox_files.append(&label);
         }
     }
 
-    // Make vbox_files scrollable
     let scrolled_window = ScrolledWindow::new();
     scrolled_window.set_child(Some(&vbox_files));
 
-    // Frame around the scrolled window
     let frame = Frame::new(None);
     frame.set_child(Some(&scrolled_window));
     frame.set_margin_start(10);
     frame.set_margin_end(10);
     frame.set_margin_bottom(10);
     frame.set_margin_top(0);
+    frame.set_vexpand(true);
 
-    // Make the frame expand vertically to fill the empty space
-    frame.set_vexpand(true);  // This makes the frame fill up the vertical space
-
-    // Add frame (with scrolled list) to main vbox
     vbox_main.append(&frame);
 
     window.set_child(Some(&vbox_main));
     window.present();
+}
+
+
+fn make_label_draggable(label: &Label, path: PathBuf) {
+    let drag_source = DragSource::new();
+    let drag_source_for_prepare = drag_source.clone();
+
+    label.add_controller(drag_source);
+
+    drag_source_for_prepare.connect_prepare(move |_drag_source, _x, _y| {
+        let file = File::for_path(&path);
+
+        // Wrap the file in a value
+        let file_value: Value = file.to_value();
+
+        // Create a ContentProvider using the file's value
+        let provider = ContentProvider::for_value(&file_value);
+
+        Some(provider)
+    });
 }
