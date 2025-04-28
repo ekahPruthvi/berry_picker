@@ -1,7 +1,7 @@
 use gtk::prelude::*;
 use gtk::{
     glib, Application, ApplicationWindow, Box as GtkBox, Label, Orientation,
-    ScrolledWindow, Frame, DragSource, gdk::{ContentProvider,Key}, gio
+    ScrolledWindow, Frame, DragSource, gdk::ContentProvider, gio
 };
 use std::fs;
 use std::path::PathBuf;
@@ -20,7 +20,6 @@ fn main() -> glib::ExitCode {
 }
 
 fn ui(app: &Application) {
-    use gtk::{SearchEntry, Widget};
 
     let window = ApplicationWindow::builder()
         .application(app)
@@ -29,8 +28,9 @@ fn ui(app: &Application) {
         .default_height(250)
         .resizable(false)
         .build();
-
+       
     let event_controller = gtk::EventControllerKey::new();
+
     event_controller.connect_key_pressed(|_, key, _, _| {
         match key {
             gtk::gdk::Key::q | gtk::gdk::Key::Escape => {
@@ -40,19 +40,10 @@ fn ui(app: &Application) {
         }
         glib::Propagation::Proceed
     });
+    
     window.add_controller(event_controller);
-
-    // Use Overlay to have background + UI
-    let overlay = gtk::Overlay::new();
-
-    // Create and set the SVG background
-    let background_picture = gtk::Picture::new();
-    background_picture.set_can_target(false); // Non-interactive
-    background_picture.set_content_fit(gtk::ContentFit::Cover);
-    background_picture.set_filename(Some("background.svg"));
-    overlay.set_child(Some(&background_picture)); // Background at bottom
-
-    // Main vertical layout
+    
+    
     let vbox_main = GtkBox::new(Orientation::Vertical, 5);
 
     let heading = Label::new(Some("BerryPicker"));
@@ -61,20 +52,14 @@ fn ui(app: &Application) {
     heading.set_margin_start(10);
     heading.set_margin_end(10);
     heading.set_xalign(0.0);
-    heading.set_markup("<span font='Cantarell 20' weight='bold'>BerryPicker</span>");
+    heading.set_markup(
+        "<span font='Cantarell 20' weight='bold'>BerryPicker</span>"
+    );
+
     vbox_main.append(&heading);
 
-    // Search entry
-    let search_entry = SearchEntry::new();
-    search_entry.set_placeholder_text(Some("Search files..."));
-    search_entry.set_margin_start(10);
-    search_entry.set_margin_end(10);
-    vbox_main.append(&search_entry);
-
-    // VBox to hold file labels
     let vbox_files = GtkBox::new(Orientation::Vertical, 5);
 
-    // Populate with file labels
     if let Ok(entries) = fs::read_dir(".") {
         for entry in entries.flatten() {
             let path: PathBuf = entry.path();
@@ -88,13 +73,13 @@ fn ui(app: &Application) {
             label.set_margin_start(10);
             label.set_margin_end(10);
 
+            // Make the label draggable
             make_label_draggable(&label, path);
 
             vbox_files.append(&label);
         }
     }
 
-    // Scrollable area for file labels
     let scrolled_window = ScrolledWindow::new();
     scrolled_window.set_child(Some(&vbox_files));
 
@@ -108,30 +93,8 @@ fn ui(app: &Application) {
 
     vbox_main.append(&frame);
 
-    // Add vbox_main to overlay (on top of background)
-    overlay.add_overlay(&vbox_main);
-
-    window.set_child(Some(&overlay));
+    window.set_child(Some(&vbox_main));
     window.present();
-
-    // --- Search filtering logic ---
-    let vbox_files_clone = vbox_files.clone();
-    search_entry.connect_search_changed(move |entry| {
-        let query = entry.text().to_lowercase();
-
-        let mut child = vbox_files_clone.first_child();
-        while let Some(widget) = child {
-            if let Some(label) = widget.downcast_ref::<Label>() {
-                let label_text = label.text().to_string().to_lowercase();
-                if label_text.contains(&query) {
-                    widget.set_visible(true);
-                } else {
-                    widget.set_visible(false);
-                }
-            }
-            child = widget.next_sibling();
-        }
-    });
 }
 
 
