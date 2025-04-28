@@ -1,7 +1,7 @@
 use gtk::prelude::*;
 use gtk::{
     glib, Application, ApplicationWindow, Box as GtkBox, Label, Orientation,
-    ScrolledWindow, Frame, DragSource, gdk::ContentProvider, gio
+    ScrolledWindow, Frame, DragSource, gdk::{ContentProvider,Key}, gio
 };
 use std::fs;
 use std::path::PathBuf;
@@ -20,14 +20,30 @@ fn main() -> glib::ExitCode {
 }
 
 fn ui(app: &Application) {
+
     let window = ApplicationWindow::builder()
         .application(app)
         .title("Berry Picker")
-        .default_width(250)
-        .default_height(300)
+        .default_width(500)
+        .default_height(250)
         .resizable(false)
         .build();
+       
+    let event_controller = gtk::EventControllerKey::new();
 
+    event_controller.connect_key_pressed(|_, key, _, _| {
+        match key {
+            gtk::gdk::Key::q | gtk::gdk::Key::Escape => {
+                std::process::exit(0);
+            }
+            _ => (),
+        }
+        glib::Propagation::Proceed
+    });
+    
+    window.add_controller(event_controller);
+    
+    
     let vbox_main = GtkBox::new(Orientation::Vertical, 5);
 
     let heading = Label::new(Some("BerryPicker"));
@@ -37,7 +53,7 @@ fn ui(app: &Application) {
     heading.set_margin_end(10);
     heading.set_xalign(0.0);
     heading.set_markup(
-        "<span font='Cantarell 18' weight='bold'>BerryPicker</span>"
+        "<span font='Cantarell 20' weight='bold'>BerryPicker</span>"
     );
 
     vbox_main.append(&heading);
