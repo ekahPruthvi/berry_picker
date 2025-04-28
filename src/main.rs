@@ -13,14 +13,25 @@ const APP_ID: &str = "org.ekah.BerryPicker";
 fn main() -> glib::ExitCode {
     let app = Application::builder()
         .application_id(APP_ID)
+        .flags(gio::ApplicationFlags::HANDLES_OPEN) // <-- ADD THIS LINE
         .build();
 
-    app.connect_activate(ui);
+    app.connect_activate(|app| {
+        ui(app, vec![]); // no files
+    });
+
+    app.connect_open(|app, files, _| {
+        let file_paths = files.iter()
+            .filter_map(|f| f.path()) // get PathBuf
+            .collect::<Vec<_>>();
+
+        ui(app, file_paths); // pass opened files
+    });
+
     app.run()
 }
 
-fn ui(app: &Application) {
-
+fn ui(app: &Application, files: Vec<PathBuf>) {
     let window = ApplicationWindow::builder()
         .application(app)
         .title("Berry Picker")
@@ -28,7 +39,7 @@ fn ui(app: &Application) {
         .default_height(250)
         .resizable(false)
         .build();
-       
+    
     let event_controller = gtk::EventControllerKey::new();
 
     event_controller.connect_key_pressed(|_, key, _, _| {
@@ -42,8 +53,8 @@ fn ui(app: &Application) {
     });
     
     window.add_controller(event_controller);
-    
-    
+
+
     let vbox_main = GtkBox::new(Orientation::Vertical, 5);
 
     let heading = Label::new(Some("BerryPicker"));
@@ -60,23 +71,45 @@ fn ui(app: &Application) {
 
     let vbox_files = GtkBox::new(Orientation::Vertical, 5);
 
-    if let Ok(entries) = fs::read_dir(".") {
-        for entry in entries.flatten() {
-            let path: PathBuf = entry.path();
-            let file_name = entry.file_name();
-            let file_name_str = file_name.to_string_lossy();
+    if files.is_empty() {
+        // No files passed, list current dir
+        if let Ok(entries) = fs::read_dir(".") {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                let file_name = entry.file_name();
+                let file_name_str = file_name.to_string_lossy();
 
-            let label = Label::new(Some(&file_name_str));
-            label.set_xalign(0.0);
-            label.set_margin_top(10);
-            label.set_margin_bottom(10);
-            label.set_margin_start(10);
-            label.set_margin_end(10);
+                let label = Label::new(Some(&file_name_str));
+                label.set_xalign(0.0);
+                label.set_margin_top(10);
+                label.set_margin_bottom(10);
+                label.set_margin_start(10);
+                label.set_margin_end(10);
 
-            // Make the label draggable
-            make_label_draggable(&label, path);
+                make_label_draggable(&label, path);
 
-            vbox_files.append(&label);
+                vbox_files.append(&label);
+            }
+        }
+    } else {
+        // Files were passed
+        for path in files {
+            if path.exists() {
+                let file_name = path.file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("<unknown>");
+                
+                let label = Label::new(Some(file_name));
+                label.set_xalign(0.0);
+                label.set_margin_top(10);
+                label.set_margin_bottom(10);
+                label.set_margin_start(10);
+                label.set_margin_end(10);
+
+                make_label_draggable(&label, path);
+
+                vbox_files.append(&label);
+            }
         }
     }
 
