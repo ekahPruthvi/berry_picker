@@ -36,7 +36,7 @@ fn ui(app: &Application, files: Vec<PathBuf>) {
         .application(app)
         .title("Berry Picker")
         .default_width(500)
-        .default_height(250)
+        .default_height(100)
         .resizable(false)
         .build();
     
@@ -64,13 +64,13 @@ fn ui(app: &Application, files: Vec<PathBuf>) {
     heading.set_margin_end(10);
     heading.set_xalign(0.0);
     heading.set_markup(
-        "<span font='Cantarell 20' weight='bold'>BerryPicker</span>"
+        "<span font='Cantarell 18' weight='bold'>BerryPicker</span>"
     );
 
     vbox_main.append(&heading);
 
     let vbox_files = GtkBox::new(Orientation::Vertical, 5);
-
+    let mut _count= 0;
     if files.is_empty() {
         // No files passed, list current dir
         if let Ok(entries) = fs::read_dir(".") {
@@ -78,7 +78,7 @@ fn ui(app: &Application, files: Vec<PathBuf>) {
                 let path = entry.path();
                 let file_name = entry.file_name();
                 let file_name_str = file_name.to_string_lossy();
-
+                _count+=1;
                 let label = Label::new(Some(&file_name_str));
                 label.set_xalign(0.0);
                 label.set_margin_top(10);
@@ -100,6 +100,7 @@ fn ui(app: &Application, files: Vec<PathBuf>) {
                     .unwrap_or("<unknown>");
                 
                 let label = Label::new(Some(file_name));
+                _count+=1;
                 label.set_xalign(0.0);
                 label.set_margin_top(10);
                 label.set_margin_bottom(10);
@@ -120,11 +121,24 @@ fn ui(app: &Application, files: Vec<PathBuf>) {
     frame.set_child(Some(&scrolled_window));
     frame.set_margin_start(10);
     frame.set_margin_end(10);
-    frame.set_margin_bottom(10);
+    frame.set_margin_bottom(1);
     frame.set_margin_top(0);
     frame.set_vexpand(true);
 
     vbox_main.append(&frame);
+
+    let no_of_entities = Label::new(None);
+    no_of_entities.set_margin_top(1);
+    no_of_entities.set_margin_bottom(8);
+    no_of_entities.set_margin_start(10);
+    no_of_entities.set_margin_end(10);
+    no_of_entities.set_xalign(1.0);
+    no_of_entities.set_markup(&format!(
+        "<span font='Cantarell 8' weight='bold' >Berry Count: {}</span>",
+        _count
+    ));
+
+    vbox_main.append(&no_of_entities);
 
     window.set_child(Some(&vbox_main));
     window.present();
