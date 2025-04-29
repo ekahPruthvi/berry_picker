@@ -38,7 +38,10 @@ fn ui(app: &Application, files: Vec<PathBuf>) {
         .default_width(500)
         .default_height(100)
         .resizable(false)
+        .decorated(false)
+        .opacity(0.7)
         .build();
+        
     
     let event_controller = gtk::EventControllerKey::new();
 
