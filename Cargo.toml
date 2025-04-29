@@ -2,7 +2,7 @@
 name = "berry_picker"
 version = "0.1.0"
 edition = "2021"
-authors = ["ekah Pruthvi1 <p1sribhat@gmail.com>"]
+authors = ["ekahPruthvi <ekahpdp@gmail.com>"]
 description = "A drag and drop application for Wayland"
 license = "MIT"
 repository = "https://github.com/ekahPruthvi/berry_picker.git"
